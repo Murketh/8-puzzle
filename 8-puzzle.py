@@ -1,3 +1,6 @@
+import time
+
+
 class Node:
     def __init__(self, data, level, fval):
         # Inicializa el nodo con la data y el valor calculado de la función f(x)
@@ -49,3 +52,81 @@ class Node:
             for j in range(0, len(self.data)):
                 if puzzle[i][j] == x:
                     return i, j
+
+
+class Puzzle:
+    def __init__(self):
+        # Inicializa el tamaño del puzzle y las listas open y closed
+        self.size = 3
+        self.open = []
+        self.closed = []
+
+    def accept(self):
+        # Función accept transforma el string ingresado por el usuario
+        # y lo convierte en una lista
+        puzzle = []
+        for i in range(0, self.size):
+            temp = input().split(" ")
+            puzzle.append(temp)
+        return puzzle
+
+    def f(self, start, goal):
+        # Función f calcula el valor heurístico f(x) = h(x)
+        return self.misplaced_tiles(start.data, goal) - start.level
+
+    def misplaced_tiles(self, start, goal):
+        # Función misplaced_tiles cuenta el número de piezas
+        # mal ubicadas con respecto al estado objetivo
+        count = 0
+        for i in range(0, self.size):
+            for j in range(0, self.size):
+                if start[i][j] != goal[i][j] and start[i][j] != '_':
+                    count -= 1
+        return count
+
+    def best_first_search(self, goal_state):
+        # Función best_first_search implementa el algoritmo Best First
+        while True:
+            current = self.open[0]
+            print("===============================\n")
+            for i in current.data:
+                for j in i:
+                    print(j, end=" ")
+                print("")
+
+            if (self.misplaced_tiles(current.data, goal_state) == 0):
+                print("\nh:", 0)
+                print("Open:", len(self.open))
+                print("Closed:", len(self.closed), "\n")
+                break
+
+            for i in current.generate_child():
+                i.fval = self.f(i, goal_state)
+                self.open.append(i)
+
+            print("\nh:", current.fval)
+            self.closed.append(current)
+            del self.open[0]
+            self.open.sort(key=lambda x: x.fval, reverse=True)
+            print("Open:", len(self.open))
+            print("Closed:", len(self.closed), "\n")
+
+    def solve(self, start_state, goal_state):
+        # Función solve resuelve el 8-puzzle
+        # transformando el estado inicial en el estado objetivo
+        start_time = time.time()
+        start = Node(start_state, 0, 0)
+        start.fval = self.f(start, goal_state)
+        self.open.append(start)
+        print("\n")
+        self.best_first_search(goal_state)
+        print("Tiempo: %s segundos\n" % (time.time() - start_time))
+
+
+if __name__ == "__main__":
+    puzzle = Puzzle()
+    print("\nIngrese el estado inicial: \n")
+    start = puzzle.accept()
+    print("\nIngrese el estado objetivo: \n")
+    goal = puzzle.accept()
+    puzzle.solve(start, goal)
