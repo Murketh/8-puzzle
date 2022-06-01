@@ -2,11 +2,12 @@ import time
 
 
 class Node:
-    def __init__(self, data, level, fval):
+    def __init__(self, data, level, fval, direction):
         # Inicializa el nodo con la data y el valor calculado de la función f(x)
         self.data = data
         self.level = level
         self.fval = fval
+        self.direction = direction
 
     def generate_child(self):
         # Genera los nodos hijo de un nodo al mover el espacio en blanco
@@ -14,12 +15,15 @@ class Node:
         x, y = self.find(self.data, '_')
         # Lista que contiene los índices de las piezas
         # a las cuales puede moverse el espacio en blanco
+        # (derecha, izquierda, abajo, arriba) respectivamente
         values_list = [[x, y-1], [x, y+1], [x-1, y], [x+1, y]]
+        directions = ["Derecha", "Izquierda", "Abajo", "Arriba"]
         children = []
-        for i in values_list:
-            child = self.move(self.data, x, y, i[0], i[1])
+        for index, value in enumerate(values_list):
+            child = self.move(self.data, x, y, value[0], value[1])
+            move_direction = directions[index]
             if child is not None:
-                child_node = Node(child, self.level+1, 0)
+                child_node = Node(child, self.level-1, 0, move_direction)
                 children.append(child_node)
         return children
 
@@ -36,10 +40,10 @@ class Node:
         else:
             return None
 
-    def copy(self, root):
+    def copy(self, node):
         # Función copy para crear una matriz similar del nodo dado
         temp = []
-        for i in root:
+        for i in node:
             t = []
             for j in i:
                 t.append(j)
@@ -72,7 +76,7 @@ class Puzzle:
 
     def f(self, start, goal):
         # Función f calcula el valor heurístico f(x) = h(x)
-        return self.misplaced_tiles(start.data, goal) - start.level
+        return self.misplaced_tiles(start.data, goal)
 
     def misplaced_tiles(self, start, goal):
         # Función misplaced_tiles cuenta el número de piezas
@@ -89,33 +93,30 @@ class Puzzle:
         while True:
             current = self.open[0]
             print("===============================\n")
-            for i in current.data:
-                for j in i:
-                    print(j, end=" ")
+            for column in current.data:
+                for row in column:
+                    print(row, end=" ")
                 print("")
 
+            print("\nDirección:", current.direction)
+            print("h:", current.fval)
+
             if (self.misplaced_tiles(current.data, goal_state) == 0):
-                print("\nh:", 0)
-                print("Open:", len(self.open))
-                print("Closed:", len(self.closed), "\n")
                 break
 
             for i in current.generate_child():
                 i.fval = self.f(i, goal_state)
                 self.open.append(i)
 
-            print("\nh:", current.fval)
             self.closed.append(current)
             del self.open[0]
             self.open.sort(key=lambda x: x.fval, reverse=True)
-            print("Open:", len(self.open))
-            print("Closed:", len(self.closed), "\n")
 
     def solve(self, start_state, goal_state):
         # Función solve resuelve el 8-puzzle
         # transformando el estado inicial en el estado objetivo
         start_time = time.time()
-        start = Node(start_state, 0, 0)
+        start = Node(start_state, 0, 0, "")
         start.fval = self.f(start, goal_state)
         self.open.append(start)
         print("\n")
