@@ -2,10 +2,10 @@ import time
 
 
 class Node:
-    def __init__(self, data, level, fval, direction):
-        # Inicializa el nodo con la data y el valor calculado de la función f(x)
+    def __init__(self, data, fval, direction):
+        # Inicializa el nodo con la data, el valor calculado de la función f(x)
+        # y la dirección del movimiento
         self.data = data
-        self.level = level
         self.fval = fval
         self.direction = direction
 
@@ -23,7 +23,7 @@ class Node:
             child = self.move(self.data, x, y, value[0], value[1])
             move_direction = directions[index]
             if child is not None:
-                child_node = Node(child, self.level-1, 0, move_direction)
+                child_node = Node(child, 0, move_direction)
                 children.append(child_node)
         return children
 
@@ -74,10 +74,6 @@ class Puzzle:
             puzzle.append(temp)
         return puzzle
 
-    def f(self, start, goal):
-        # Función f calcula el valor heurístico f(x) = h(x)
-        return self.misplaced_tiles(start.data, goal)
-
     def misplaced_tiles(self, start, goal):
         # Función misplaced_tiles cuenta el número de piezas
         # mal ubicadas con respecto al estado objetivo
@@ -90,6 +86,7 @@ class Puzzle:
 
     def best_first_search(self, goal_state):
         # Función best_first_search implementa el algoritmo Best First
+        # con la heurística de piezas mal ubicadas
         while True:
             current = self.open[0]
             print("===============================\n")
@@ -105,7 +102,7 @@ class Puzzle:
                 break
 
             for i in current.generate_child():
-                i.fval = self.f(i, goal_state)
+                i.fval = self.misplaced_tiles(i.data, goal_state)
                 self.open.append(i)
 
             self.closed.append(current)
@@ -116,8 +113,8 @@ class Puzzle:
         # Función solve resuelve el 8-puzzle
         # transformando el estado inicial en el estado objetivo
         start_time = time.time()
-        start = Node(start_state, 0, 0, "")
-        start.fval = self.f(start, goal_state)
+        start = Node(start_state, 0, "")
+        start.fval = self.misplaced_tiles(start.data, goal_state)
         self.open.append(start)
         print("\n")
         self.best_first_search(goal_state)
